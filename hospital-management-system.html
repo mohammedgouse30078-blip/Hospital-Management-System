@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedCore — Hospital Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0E3D3A;
+    --teal-700:#155e58;
+    --teal-500:#1C7C72;
+    --teal-100:#E4EFED;
+    --bg:#F6F7F5;
+    --surface:#FFFFFF;
+    --border:#DFE4E1;
+    --text:#182420;
+    --text-soft:#5C6A65;
+    --accent:#E5533C;
+    --accent-soft:#FCE7E2;
+    --good:#2E8B57;
+    --good-soft:#E4F3EA;
+    --warn:#B8860B;
+    --warn-soft:#FBF1DC;
+    --font-display:'Libre Franklin',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+  a{color:inherit;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:var(--teal-900);
+    color:#fff;
+    padding:18px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:9px;
+    background:linear-gradient(135deg,var(--teal-500),var(--accent));
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:800;font-size:18px;color:#fff;
+  }
+  .brand-text h1{font-family:var(--font-display);font-weight:700;font-size:19px;margin:0;letter-spacing:.2px;}
+  .brand-text span{font-size:12px;color:#B9D6D1;font-family:var(--font-mono);}
+
+  /* ---------- Vitals strip (signature element) ---------- */
+  .vitals{
+    display:flex;
+    gap:0;
+    background:var(--teal-700);
+    overflow-x:auto;
+  }
+  .vital{
+    flex:1;
+    min-width:150px;
+    padding:14px 20px;
+    border-right:1px solid rgba(255,255,255,.12);
+    color:#fff;
+    position:relative;
+  }
+  .vital:last-child{border-right:none;}
+  .vital .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#AFD2CC;font-family:var(--font-mono);}
+  .vital .value{font-family:var(--font-display);font-weight:800;font-size:24px;margin-top:2px;}
+  .pulse-line{position:absolute;bottom:0;left:0;right:0;height:16px;opacity:.55;}
+  .pulse-line svg{width:100%;height:100%;display:block;}
+  .pulse-path{stroke:#fff;stroke-width:1.4;fill:none;stroke-dasharray:220;stroke-dashoffset:220;animation:draw 2.6s linear infinite;}
+  @keyframes draw{to{stroke-dashoffset:-220;}}
+  @media (prefers-reduced-motion:reduce){.pulse-path{animation:none;stroke-dashoffset:0;}}
+
+  /* ---------- Tabs ---------- */
+  .tabbar{
+    display:flex;
+    gap:4px;
+    padding:14px 28px 0;
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .tab{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:14px;
+    padding:10px 18px;
+    border-radius:8px 8px 0 0;
+    cursor:pointer;
+    color:var(--text-soft);
+    border:1px solid transparent;
+    display:flex;align-items:center;gap:8px;
+  }
+  .tab.active{
+    background:var(--surface);
+    color:var(--teal-900);
+    border:1px solid var(--border);
+    border-bottom:1px solid var(--surface);
+    margin-bottom:-1px;
+  }
+  .tab .dot{width:7px;height:7px;border-radius:50%;background:var(--teal-500);}
+  .tab.active .dot{background:var(--accent);}
+
+  main{padding:26px 28px 60px;max-width:1180px;margin:0 auto;}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .grid{display:grid;grid-template-columns:380px 1fr;gap:22px;align-items:start;}
+  @media (max-width:880px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .card h2{
+    font-family:var(--font-display);font-size:16px;font-weight:700;
+    margin:0 0 4px;color:var(--teal-900);
+  }
+  .card .sub{font-size:12.5px;color:var(--text-soft);margin:0 0 16px;}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--text-soft);margin:12px 0 5px;}
+  label:first-of-type{margin-top:0;}
+  input,select,textarea{
+    width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:7px;
+    font-family:var(--font-body);font-size:13.5px;background:#fcfdfc;color:var(--text);
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--teal-500);outline-offset:1px;border-color:var(--teal-500);}
+  textarea{resize:vertical;min-height:56px;}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  .btn{
+    font-family:var(--font-display);font-weight:700;font-size:13.5px;
+    padding:10px 18px;border-radius:7px;border:none;cursor:pointer;
+    background:var(--teal-900);color:#fff;margin-top:16px;
+  }
+  .btn:hover{background:var(--teal-700);}
+  .btn.accent{background:var(--accent);}
+  .btn.accent:hover{background:#c9432f;}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);margin-top:0;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;font-family:var(--font-mono);font-weight:500;font-size:11px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--text-soft);
+    padding:8px 10px;border-bottom:1px solid var(--border);
+  }
+  td{padding:10px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .empty{padding:30px 10px;text-align:center;color:var(--text-soft);font-size:13px;}
+
+  .badge{
+    display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;
+    font-family:var(--font-mono);
+  }
+  .badge.good{background:var(--good-soft);color:var(--good);}
+  .badge.warn{background:var(--warn-soft);color:var(--warn);}
+  .badge.bad{background:var(--accent-soft);color:var(--accent);}
+
+  select.status-select{width:auto;padding:5px 8px;font-size:12px;}
+
+  .table-wrap{overflow-x:auto;}
+
+  .list-card{margin-top:22px;}
+
+  .billing-items{border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;}
+  .billing-item-row{display:grid;grid-template-columns:1fr 90px 90px 28px;gap:8px;margin-bottom:8px;align-items:center;}
+  .billing-item-row input{padding:7px 9px;font-size:13px;}
+  .remove-x{cursor:pointer;color:var(--accent);font-weight:700;text-align:center;}
+  .total-line{display:flex;justify-content:space-between;padding-top:10px;border-top:1px dashed var(--border);margin-top:6px;font-family:var(--font-display);font-weight:700;color:var(--teal-900);}
+
+  .footnote{font-size:11.5px;color:var(--text-soft);margin-top:10px;line-height:1.5;}
+  .flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+
+  ::placeholder{color:#9AA6A1;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">MC</div>
+    <div class="brand-text">
+      <h1>MedCore</h1>
+      <span>Hospital Operations Console</span>
+    </div>
+  </div>
+  <div style="font-family:var(--font-mono);font-size:12px;color:#B9D6D1;" id="clockLine"></div>
+</div>
+
+<div class="vitals" id="vitalsStrip"></div>
+
+<div class="tabbar" id="tabbar">
+  <div class="tab active" data-tab="dashboard"><span class="dot"></span>Dashboard</div>
+  <div class="tab" data-tab="patients"><span class="dot"></span>Patients</div>
+  <div class="tab" data-tab="doctors"><span class="dot"></span>Doctor Availability</div>
+  <div class="tab" data-tab="ambulance"><span class="dot"></span>Ambulance Service</div>
+  <div class="tab" data-tab="billing"><span class="dot"></span>Billing</div>
+</div>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <h2>Today at a glance</h2>
+        <p class="sub">Live snapshot generated from current records.</p>
+        <div id="dashSummary" style="font-size:13.5px;line-height:1.9;"></div>
+      </div>
+      <div class="card">
+        <h2>Recent activity</h2>
+        <p class="sub">Latest entries across the console.</p>
+        <div id="dashActivity" style="font-size:13px;line-height:1.9;"></div>
+      </div>
+    </div>
+    <p class="footnote">Data lives in this browser tab only for this session — refreshing the page clears it. Export or note down anything important before closing.</p>
+  </div>
+
+  <!-- PATIENTS -->
+  <div class="panel" id="panel-patients">
+    <div class="grid">
+      <div class="card">
+        <h2>Admit a patient</h2>
+        <p class="sub">Add core details on intake.</p>
+        <form id="patientForm">
+          <label>Full name</label>
+          <input type="text" id="p-name" placeholder="e.g. Ramesh Kulkarni" required>
+          <div class="row2">
+            <div><label>Age</label><input type="number" id="p-age" min="0" max="120" required></div>
+            <div><label>Gender</label>
+              <select id="p-gender">
+                <option>Female</option><option>Male</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div><label>Contact number</label><input type="tel" id="p-contact" placeholder="98xxxxxxxx" required></div>
+            <div><label>Blood group</label>
+              <select id="p-blood">
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select>
+            </div>
+          </div>
+          <label>Ward / room</label>
+          <input type="text" id="p-ward" placeholder="e.g. General Ward 3, Bed 14">
+          <label>Attending doctor</label>
+          <select id="p-doctor"><option value="">Assign later</option></select>
+          <label>Reason for admission</label>
+          <textarea id="p-reason" placeholder="Brief note"></textarea>
+          <button class="btn" type="submit">Admit patient</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="flex-between">
+          <h2 style="margin:0;">Patient records</h2>
+          <input type="text" id="patientSearch" placeholder="Search by name or ward…" style="max-width:220px;">
+        </div>
+        <p class="sub">All patients currently on file.</p>
+        <div class="table-wrap">
+          <table id="patientTable">
+            <thead><tr>
+              <th>Name</th><th>Age/Sex</th><th>Ward</th><th>Doctor</th><th>Contact</th><th>Blood</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="patientEmpty">No patients admitted yet. Use the form to add the first one.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCTORS -->
+  <div class="panel" id="panel-doctors">
+    <div class="grid">
+      <div class="card">
+        <h2>Add a doctor</h2>
+        <p class="sub">Register a doctor and set their current availability.</p>
+        <form id="doctorForm">
+          <label>Full name</label>
+          <input type="text" id="d-name" placeholder="e.g. Dr. Anjali Rao" required>
+          <label>Specialization</label>
+          <input type="text" id="d-spec" placeholder="e.g. Cardiology" required>
+          <div class="row2">
+            <div><label>Status</label>
+              <select id="d-status">
+                <option value="available">Available</option>
+                <option value="in-surgery">In surgery</option>
+                <option value="on-leave">On leave</option>
+              </select>
+            </div>
+            <div><label>Shift</label>
+              <select id="d-shift">
+                <option>Morning (8am–2pm)</option>
+                <option>Evening (2pm–8pm)</option>
+                <option>Night (8pm–8am)</option>
+              </select>
+            </div>
+          </div>
+          <label>Room / OPD number</label>
+          <input type="text" id="d-room" placeholder="e.g. OPD 12">
+          <button class="btn" type="submit">Add doctor</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Doctor roster</h2>
+        <p class="sub">Update status as availability changes through the day.</p>
+        <div class="table-wrap">
+          <table id="doctorTable">
+            <thead><tr>
+              <th>Doctor</th><th>Specialization</th><th>Shift</th><th>Room</th><th>Status</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="doctorEmpty">No doctors registered yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AMBULANCE -->
+  <div class="panel" id="panel-ambulance">
+    <div class="grid">
+      <div class="card">
+        <h2>Dispatch an ambulance</h2>
+        <p class="sub">Log a new pickup request.</p>
+        <form id="ambForm">
+          <label>Patient / caller name</label>
+          <input type="text" id="a-name" required placeholder="e.g. Family of S. Iyer">
+          <label>Pickup location</label>
+          <input type="text" id="a-pickup" required placeholder="Street, area, landmark">
+          <label>Assign vehicle</label>
+          <select id="a-vehicle" required></select>
+          <div class="row2">
+            <div><label>Contact number</label><input type="tel" id="a-contact" required></div>
+            <div><label>Priority</label>
+              <select id="a-priority">
+                <option>Emergency</option><option>Urgent</option><option>Routine transfer</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn accent" type="submit">Dispatch</button>
+        </form>
+
+        <div style="margin-top:24px;">
+          <h2 style="font-size:14px;">Fleet</h2>
+          <div id="fleetList" style="font-size:13px;line-height:2;"></div>
+          <form id="fleetForm" style="margin-top:10px;display:flex;gap:8px;">
+            <input type="text" id="fleet-id" placeholder="New vehicle ID e.g. AMB-05" style="flex:1;">
+            <button class="btn ghost" type="submit" style="white-space:nowrap;">Add vehicle</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Dispatch log</h2>
+        <p class="sub">Active and past requests, most recent first.</p>
+        <div class="table-wrap">
+          <table id="ambTable">
+            <thead><tr>
+              <th>Patient</th><th>Pickup</th><th>Vehicle</th><th>Priority</th><th>Status</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="ambEmpty">No dispatch requests logged yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BILLING -->
+  <div class="panel" id="panel-billing">
+    <div class="grid">
+      <div class="card">
+        <h2>Create invoice</h2>
+        <p class="sub">Itemize charges for a patient.</p>
+        <form id="billForm">
+          <label>Patient</label>
+          <select id="b-patient" required><option value="">Select a patient</option></select>
+          <label>Line items</label>
+          <div class="billing-items" id="billItems"></div>
+          <button type="button" class="btn ghost" id="addItemBtn" style="margin-top:8px;">+ Add line item</button>
+          <div class="total-line"><span>Total</span><span id="billTotal">₹0</span></div>
+          <button class="btn" type="submit">Generate invoice</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Invoices</h2>
+        <p class="sub">Mark invoices paid once settled.</p>
+        <div class="table-wrap">
+          <table id="billTable">
+            <thead><tr>
+              <th>Invoice</th><th>Patient</th><th>Total</th><th>Status</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="billEmpty">No invoices generated yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ---------------- State (in-memory only, resets on reload) ---------------- */
+let patients = [];
+let doctors = [];
+let vehicles = ["AMB-01","AMB-02","AMB-03"];
+let dispatches = [];
+let invoices = [];
+let idCounter = 1;
+const nextId = () => idCounter++;
+
+/* ---------------- Utilities ---------------- */
+function fmtMoney(n){ return "₹" + Number(n||0).toLocaleString("en-IN"); }
+function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------------- Tabs ---------------- */
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("panel-"+tab.dataset.tab).classList.add("active");
+    if(tab.dataset.tab==="dashboard") renderDashboard();
+  });
+});
+
+/* ---------------- Clock ---------------- */
+function tickClock(){
+  const el = document.getElementById("clockLine");
+  const now = new Date();
+  el.textContent = now.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short",year:"numeric"}) + "  ·  " + now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+}
+tickClock(); setInterval(tickClock,30000);
+
+/* ---------------- Vitals strip ---------------- */
+function pulseSvg(){
+  return `<svg viewBox="0 0 220 16" preserveAspectRatio="none"><path class="pulse-path" d="M0,8 L40,8 L48,2 L56,14 L64,8 L80,8 L88,4 L96,12 L104,8 L220,8"/></svg>`;
+}
+function renderVitals(){
+  const availableDocs = doctors.filter(d=>d.status==="available").length;
+  const availableAmb = vehicles.length - dispatches.filter(d=>d.status==="En route" || d.status==="On scene").length;
+  const revenue = invoices.reduce((s,i)=>s+i.total,0);
+  const pending = invoices.filter(i=>i.status==="Pending").length;
+  const data = [
+    {label:"Patients on file", value: patients.length},
+    {label:"Doctors available", value: availableDocs + " / " + doctors.length},
+    {label:"Ambulances free", value: Math.max(availableAmb,0) + " / " + vehicles.length},
+    {label:"Billed today", value: fmtMoney(revenue)},
+    {label:"Invoices pending", value: pending},
+  ];
+  document.getElementById("vitalsStrip").innerHTML = data.map(d=>`
+    <div class="vital">
+      <div class="label">${d.label}</div>
+      <div class="value">${d.value}</div>
+      <div class="pulse-line">${pulseSvg()}</div>
+    </div>`).join("");
+}
+
+/* ---------------- Dashboard ---------------- */
+function renderDashboard(){
+  const s = document.getElementById("dashSummary");
+  s.innerHTML = `
+    <div>Total patients admitted: <strong>${patients.length}</strong></div>
+    <div>Doctors on roster: <strong>${doctors.length}</strong> (${doctors.filter(d=>d.status==="available").length} available now)</div>
+    <div>Ambulance fleet: <strong>${vehicles.length}</strong> vehicles, ${dispatches.filter(d=>d.status!=="Completed").length} active dispatch(es)</div>
+    <div>Invoices raised: <strong>${invoices.length}</strong>, ${fmtMoney(invoices.reduce((sum,i)=>sum+i.total,0))} total billed</div>
+  `;
+  const events = [];
+  patients.slice(-3).reverse().forEach(p=>events.push(`Patient admitted — ${escapeHtml(p.name)} (${escapeHtml(p.ward||"unassigned ward")})`));
+  dispatches.slice(-3).reverse().forEach(d=>events.push(`Ambulance dispatched — ${escapeHtml(d.name)} → ${escapeHtml(d.vehicle)}`));
+  invoices.slice(-3).reverse().forEach(i=>events.push(`Invoice generated — ${escapeHtml(i.patientName)}, ${fmtMoney(i.total)}`));
+  document.getElementById("dashActivity").innerHTML = events.length
+    ? events.slice(0,6).map(e=>`<div>• ${e}</div>`).join("")
+    : `<div style="color:var(--text-soft);">Nothing logged yet — activity will appear here as you use the console.</div>`;
+}
+
+/* ---------------- Patients ---------------- */
+function refreshDoctorSelect(){
+  const sel = document.getElementById("p-doctor");
+  const current = sel.value;
+  sel.innerHTML = `<option value="">Assign later</option>` + doctors.map(d=>`<option value="${d.id}">${escapeHtml(d.name)} — ${escapeHtml(d.spec)}</option>`).join("");
+  sel.value = current;
+}
+
+document.getElementById("patientForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const docId = document.getElementById("p-doctor").value;
+  const doc = doctors.find(d=>String(d.id)===String(docId));
+  patients.push({
+    id: nextId(),
+    name: document.getElementById("p-name").value.trim(),
+    age: document.getElementById("p-age").value,
+    gender: document.getElementById("p-gender").value,
+    contact: document.getElementById("p-contact").value.trim(),
+    blood: document.getElementById("p-blood").value,
+    ward: document.getElementById("p-ward").value.trim(),
+    doctorId: docId || null,
+    doctorName: doc ? doc.name : "",
+    reason: document.getElementById("p-reason").value.trim(),
+  });
+  e.target.reset();
+  renderPatients();
+  renderVitals();
+  refreshBillingPatientSelect();
+});
+
+function renderPatients(){
+  const tbody = document.querySelector("#patientTable tbody");
+  const q = (document.getElementById("patientSearch").value||"").toLowerCase();
+  const filtered = patients.filter(p => p.name.toLowerCase().includes(q) || (p.ward||"").toLowerCase().includes(q));
+  tbody.innerHTML = filtered.map(p=>`
+    <tr>
+      <td><strong>${escapeHtml(p.name)}</strong></td>
+      <td>${escapeHtml(p.age)} / ${escapeHtml(p.gender)}</td>
+      <td>${escapeHtml(p.ward)||"—"}</td>
+      <td>${escapeHtml(p.doctorName)||"—"}</td>
+      <td>${escapeHtml(p.contact)}</td>
+      <td>${escapeHtml(p.blood)}</td>
+      <td><span class="remove-x" onclick="removePatient(${p.id})">✕</span></td>
+    </tr>`).join("");
+  document.getElementById("patientEmpty").style.display = filtered.length ? "none" : "block";
+}
+function removePatient(id){
+  patients = patients.filter(p=>p.id!==id);
+  renderPatients(); renderVitals(); refreshBillingPatientSelect();
+}
+document.getElementById("patientSearch").addEventListener("input", renderPatients);
+
+/* ---------------- Doctors ---------------- */
+document.getElementById("doctorForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  doctors.push({
+    id: nextId(),
+    name: document.getElementById("d-name").value.trim(),
+    spec: document.getElementById("d-spec").value.trim(),
+    status: document.getElementById("d-status").value,
+    shift: document.getElementById("d-shift").value,
+    room: document.getElementById("d-room").value.trim(),
+  });
+  e.target.reset();
+  renderDoctors(); renderVitals(); refreshDoctorSelect();
+});
+
+function statusBadge(status){
+  const map = {
+    "available": {cls:"good", label:"Available"},
+    "in-surgery": {cls:"warn", label:"In surgery"},
+    "on-leave": {cls:"bad", label:"On leave"},
+  };
+  const m = map[status] || {cls:"warn", label:status};
+  return `<span class="badge ${m.cls}">${m.label}</span>`;
+}
+
+function renderDoctors(){
+  const tbody = document.querySelector("#doctorTable tbody");
+  tbody.innerHTML = doctors.map(d=>`
+    <tr>
+      <td><strong>${escapeHtml(d.name)}</strong></td>
+      <td>${escapeHtml(d.spec)}</td>
+      <td>${escapeHtml(d.shift)}</td>
+      <td>${escapeHtml(d.room)||"—"}</td>
+      <td>
+        <select class="status-select" onchange="updateDoctorStatus(${d.id}, this.value)">
+          <option value="available" ${d.status==="available"?"selected":""}>Available</option>
+          <option value="in-surgery" ${d.status==="in-surgery"?"selected":""}>In surgery</option>
+          <option value="on-leave" ${d.status==="on-leave"?"selected":""}>On leave</option>
+        </select>
+        ${statusBadge(d.status)}
+      </td>
+      <td><span class="remove-x" onclick="removeDoctor(${d.id})">✕</span></td>
+    </tr>`).join("");
+  document.getElementById("doctorEmpty").style.display = doctors.length ? "none" : "block";
+}
+function updateDoctorStatus(id, status){
+  const d = doctors.find(x=>x.id===id);
+  if(d){ d.status = status; renderDoctors(); renderVitals(); }
+}
+function removeDoctor(id){
+  doctors = doctors.filter(d=>d.id!==id);
+  renderDoctors(); renderVitals(); refreshDoctorSelect();
+}
+
+/* ---------------- Ambulance ---------------- */
+function refreshVehicleSelect(){
+  const sel = document.getElementById("a-vehicle");
+  sel.innerHTML = vehicles.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+}
+document.getElementById("fleetForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const idInput = document.getElementById("fleet-id");
+  const val = idInput.value.trim();
+  if(val && !vehicles.includes(val)){ vehicles.push(val); }
+  idInput.value = "";
+  refreshVehicleSelect(); renderFleet(); renderVitals();
+});
+function renderFleet(){
+  const busy = new Set(dispatches.filter(d=>d.status==="En route"||d.status==="On scene").map(d=>d.vehicle));
+  document.getElementById("fleetList").innerHTML = vehicles.map(v=>`
+    <div class="flex-between">
+      <span style="font-family:var(--font-mono);">${escapeHtml(v)}</span>
+      ${busy.has(v) ? '<span class="badge warn">On call</span>' : '<span class="badge good">Available</span>'}
+    </div>`).join("") || `<div style="color:var(--text-soft);">No vehicles registered.</div>`;
+}
+
+document.getElementById("ambForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  dispatches.push({
+    id: nextId(),
+    name: document.getElementById("a-name").value.trim(),
+    pickup: document.getElementById("a-pickup").value.trim(),
+    vehicle: document.getElementById("a-vehicle").value,
+    contact: document.getElementById("a-contact").value.trim(),
+    priority: document.getElementById("a-priority").value,
+    status: "En route",
+  });
+  e.target.reset();
+  refreshVehicleSelect();
+  renderAmbulance(); renderFleet(); renderVitals();
+});
+
+function priorityBadge(p){
+  const map = {"Emergency":"bad","Urgent":"warn","Routine transfer":"good"};
+  return `<span class="badge ${map[p]||"warn"}">${p}</span>`;
+}
+function renderAmbulance(){
+  const tbody = document.querySelector("#ambTable tbody");
+  tbody.innerHTML = dispatches.slice().reverse().map(d=>`
+    <tr>
+      <td><strong>${escapeHtml(d.name)}</strong><br><span style="color:var(--text-soft);font-size:11.5px;">${escapeHtml(d.contact)}</span></td>
+      <td>${escapeHtml(d.pickup)}</td>
+      <td style="font-family:var(--font-mono);">${escapeHtml(d.vehicle)}</td>
+      <td>${priorityBadge(d.priority)}</td>
+      <td>
+        <select class="status-select" onchange="updateDispatchStatus(${d.id}, this.value)">
+          <option value="En route" ${d.status==="En route"?"selected":""}>En route</option>
+          <option value="On scene" ${d.status==="On scene"?"selected":""}>On scene</option>
+          <option value="Completed" ${d.status==="Completed"?"selected":""}>Completed</option>
+        </select>
+      </td>
+      <td><span class="remove-x" onclick="removeDispatch(${d.id})">✕</span></td>
+    </tr>`).join("");
+  document.getElementById("ambEmpty").style.display = dispatches.length ? "none" : "block";
+}
+function updateDispatchStatus(id, status){
+  const d = dispatches.find(x=>x.id===id);
+  if(d){ d.status = status; renderAmbulance(); renderFleet(); renderVitals(); }
+}
+function removeDispatch(id){
+  dispatches = dispatches.filter(d=>d.id!==id);
+  renderAmbulance(); renderFleet(); renderVitals();
+}
+
+/* ---------------- Billing ---------------- */
+let billItemCount = 0;
+function addBillItemRow(name="", amount=""){
+  billItemCount++;
+  const rowId = "bi-"+billItemCount;
+  const wrap = document.getElementById("billItems");
+  const row = document.createElement("div");
+  row.className = "billing-item-row";
+  row.id = rowId;
+  row.innerHTML = `
+    <input type="text" placeholder="e.g. Consultation fee" class="bi-name" value="${escapeHtml(name)}">
+    <input type="number" min="0" placeholder="Amount" class="bi-amount" value="${escapeHtml(amount)}">
+    <span style="font-size:11px;color:var(--text-soft);align-self:center;">INR</span>
+    <span class="remove-x" onclick="document.getElementById('${rowId}').remove(); computeBillTotal();">✕</span>
+  `;
+  wrap.appendChild(row);
+  row.querySelectorAll("input").forEach(i=>i.addEventListener("input", computeBillTotal));
+}
+document.getElementById("addItemBtn").addEventListener("click", ()=>addBillItemRow());
+function computeBillTotal(){
+  let total = 0;
+  document.querySelectorAll(".bi-amount").forEach(i=> total += Number(i.value||0));
+  document.getElementById("billTotal").textContent = fmtMoney(total);
+  return total;
+}
+function refreshBillingPatientSelect(){
+  const sel = document.getElementById("b-patient");
+  const current = sel.value;
+  sel.innerHTML = `<option value="">Select a patient</option>` + patients.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+  sel.value = current;
+}
+
+document.getElementById("billForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const patientId = document.getElementById("b-patient").value;
+  const patient = patients.find(p=>String(p.id)===String(patientId));
+  if(!patient){ return; }
+  const items = [];
+  document.querySelectorAll(".billing-item-row").forEach(row=>{
+    const name = row.querySelector(".bi-name").value.trim();
+    const amount = Number(row.querySelector(".bi-amount").value||0);
+    if(name && amount>0) items.push({name, amount});
+  });
+  if(items.length===0){ alert("Add at least one line item with a name and amount."); return; }
+  const total = items.reduce((s,i)=>s+i.amount,0);
+  invoices.push({
+    id: nextId(),
+    patientId: patient.id,
+    patientName: patient.name,
+    items,
+    total,
+    status: "Pending",
+  });
+  document.getElementById("billItems").innerHTML = "";
+  addBillItemRow();
+  e.target.reset();
+  computeBillTotal();
+  renderInvoices(); renderVitals();
+});
+
+function renderInvoices(){
+  const tbody = document.querySelector("#billTable tbody");
+  tbody.innerHTML = invoices.slice().reverse().map(inv=>`
+    <tr>
+      <td style="font-family:var(--font-mono);">INV-${String(inv.id).padStart(4,"0")}</td>
+      <td>${escapeHtml(inv.patientName)}</td>
+      <td>${fmtMoney(inv.total)}</td>
+      <td><span class="badge ${inv.status==="Paid"?"good":"warn"}">${inv.status}</span></td>
+      <td>
+        ${inv.status==="Pending" ? `<span class="remove-x" style="color:var(--good);" onclick="markPaid(${inv.id})">Mark paid</span>` : ""}
+      </td>
+    </tr>`).join("");
+  document.getElementById("billEmpty").style.display = invoices.length ? "none" : "block";
+}
+function markPaid(id){
+  const inv = invoices.find(i=>i.id===id);
+  if(inv){ inv.status="Paid"; renderInvoices(); renderVitals(); }
+}
+
+/* ---------------- Init ---------------- */
+refreshVehicleSelect();
+renderFleet();
+addBillItemRow("Consultation fee", "");
+renderPatients();
+renderDoctors();
+renderAmbulance();
+renderInvoices();
+refreshBillingPatientSelect();
+renderVitals();
+renderDashboard();
+</script>
+</body>
+</html>
